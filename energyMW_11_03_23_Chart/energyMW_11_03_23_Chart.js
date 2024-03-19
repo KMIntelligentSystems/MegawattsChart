@@ -4,7 +4,8 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { loadScript, loadStyle } from 'lightning/platformResourceLoader';
 import { subscribe, MessageContext} from 'lightning/messageService';
 import  ENERGYMWDATA_SELECTED_CHANNEL from '@salesforce/messageChannel/EnergyMWData_Selected__c';
-import MyTooltip from '@salesforce/resourceUrl/tooltip';
+import  ENERGYMWDATA_RETRIEVED_CHANNEL from '@salesforce/messageChannel/EnergyMWData_Retrieved__c';
+//import MyTooltip from '@salesforce/resourceUrl/tooltip';
 
   function DataItem(time,megawatts) {
     this.time = time;
@@ -41,13 +42,14 @@ export default class EnergyMW_11_03_23_Chart extends LightningElement {
 
     connectedCallback() {
            this.subscribeToEnergyMWDataChannel();
+        //   publish(this.messageContext,ENERGYMWDATA_RETRIEVED_CHANNEL , {msg: 'more'});
     }
 
     async renderedCallback() {
         try {
             await Promise.all([
                 loadScript(this, D3 + '/d3.v5.min.js'),
-                loadStyle(this, MyTooltip +  '/energyMW_11_03_23_Chart.css'), 
+               // loadStyle(this, MyTooltip +  '/energyMW_11_03_23_Chart.css'), 
             ]);
            
          //   this.createMWEnergyChart();
@@ -134,7 +136,7 @@ export default class EnergyMW_11_03_23_Chart extends LightningElement {
         .attr("width", 800)
         .attr("height", 400);
 
-        const tooltip = d3.select("#tooltip");
+      //  const tooltip = d3.select("#tooltip");
     
         // Define scales
         const xScale = d3.scaleTime()
@@ -176,7 +178,7 @@ export default class EnergyMW_11_03_23_Chart extends LightningElement {
                   .style("opacity", 0.5)
                   .style("stroke", "black")
                   .style("stroke-width", 1)
-                  .on("mouseover", function(event, d) {
+               /*   .on("mouseover", function(event, d) {
                     tooltip.html(`MW: ${d.megawatts}`);
                     tooltip.style("left", `${event.pageX + 10}px`);
                     tooltip.style("top", `${event.pageY - 28}px`);
@@ -184,7 +186,7 @@ export default class EnergyMW_11_03_23_Chart extends LightningElement {
                   })
                   .on("mouseout", function() {
                     tooltip.classed("show", false);
-                  });
+                  });*/
                   // ... (other attributes and event handlers)
 
                /*  u.transition()
