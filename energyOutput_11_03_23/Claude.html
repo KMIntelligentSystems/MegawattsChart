@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wind Turbine Output</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+
+    <button id="getCSV">Get CSV</button>
+  <svg id="chart"></svg>
+ 
+  <script>
+   
+    function DataItem(time,megawatts) {
+        this.time = time;
+        this.megawatts = megawatts;
+      }
+  
+
+    const button = document.querySelector('#getCSV');
+    const myData = [];
+           // Parse the time values
+    const parseTime = d3.timeParse("%H:%M");
+
+    button.addEventListener("click", () => { 
+     getData();
+    });
+
+    function encodeImageFileAsURL(file) {
+        // var file = element.files[0];
+         var reader = new FileReader();
+         reader.onloadend = function() {
+           console.log('RESULT', reader.result)
+         }
+         reader.readAsDataURL(file);
+       }
+
+     function getData(){
+        const myData = [];
+      /* d3.csv("https://raw.githubusercontent.com/KMIntelligentSystems/MegawattsChart/main/MW110323.csv", function(data) {
+            myData.push(data);
+        }).then(_ => {getDataToLoad(myData)});*/
+     //   var solarMW = [6][288];
+        const solarMW = Array.from(Array(6), () => new Array(288));
+        var temp = [];
+        const windMW = Array.from(Array(9), () => new Array(288));
+        const hydroMW = Array.from(Array(5), () => new Array(288));
+        const gasMW = [];
+        const coalMW = [];
+        let indexMW = 0;
+        let counter = 0;
+        const maxCols = 288;
+        d3.csv("https://raw.githubusercontent.com/KMIntelligentSystems/MegawattsChart/main/MW110323.csv").then(data => {
+            // Extract the data for each category and find the maximum megawatt value
+            data.forEach(d => {
+                
+              for (const [key, value] of Object.entries(d)) {
+                      var type;
+                      var name;
+                      var megawatts;
+                      if(key.substring(0,4) == 'TYPE'){
+                        type = value;
+                      }
+                      if(key.substring(0,4) == 'Name'){
+                        name = value;
+                      }
+                      if(key.substring(0,3) == 'MW_'){
+                          megawatts = value;
+                      }
+                    if(type == 'SOLAR'){
+                        temp.push(megawatts);
+                        if(++counter == maxCols){
+                            let index = 0;
+                            temp.forEach(item =>{
+                                if(item == undefined){
+                                    solarMW[indexMW][index++] = 0;
+                                } else {
+                                    solarMW[indexMW][index++] = item;
+                                }
+                            });
+                            temp = [];
+                            counter = 0;                            
+                            indexMW++;
+                            if(indexMW == 6){
+                                indexMW = 0;
+                            }
+                        }
+                    } else if(type == 'WIND'){
+                        temp.push(megawatts);
+                        if(++counter == maxCols){
+                            let index = 0;
+                            temp.forEach(item =>{
+                                if(item == undefined){
+                                    windMW[indexMW][index++] = 0;
+                                } else {
+                                    windMW[indexMW][index++] = item;
+                                }
+                            });
+                            temp = [];
+                            counter = 0;                            
+                            indexMW++;
+                            if(indexMW == 9){
+                                indexMW = 0;
+                            }
+                    }
+                } else if(type == 'HYDRO'){
+                    temp.push(megawatts);
+                    if(++counter == maxCols){
+                        let index = 0;
+                        temp.forEach(item =>{
+                            if(item == undefined){
+                                hydroMW[indexMW][index++] = 0;
+                            } else {
+                                hydroMW[indexMW][index++] = item;
+                            }
+                        });
+                        temp = [];
+                        counter = 0;                            
+                        indexMW++;
+                        if(indexMW == 5){
+                            indexMW = 0;
+                        }
+                    }
+                } else if(type == 'NATURAL GAS'){
+                    gasMW.push(megawatts);
+                } else if(type == 'COAL'){
+                    coalMW.push(megawatts);
+                }
+            }
+            //  const category = d.Category;
+             // const megawatts = +d.MW;
+             /* if (category in categories) {
+              //  categories[category].push({ time: parseTime(d.Time), megawatts: megawatts });
+                categories[category].maxMW = Math.max(categories[category].maxMW, megawatts);
+              } else {
+             //   categories[category] = [{ time: parseTime(d.Time), megawatts: megawatts }];
+                categories[category].maxMW = megawatts;
+              }*/
+            });
+            console.log('solar ', solarMW);
+            console.log('solar ', windMW);
+            console.log('solar ', hydroMW);
+            console.log('solar ', gasMW);
+            console.log('solar ', coalMW);
+        });
+          
+        
+    }
+    function getDataToLoad(message){
+        let wind = message[12];
+        var mwData = [];
+        for (const [key, value] of Object.entries(wind)) {
+          //  var c = key.substring(0,3);
+            if(key.substring(0,3) == 'MW_'){
+                mwData.push(value);
+            }
+        }
+  
+          var mWCompleteArray = [];
+          let i = 0;
+          generateTimes().forEach((time) => {
+            if(mwData[i] !== 'undefined'){
+                let dataItem = new DataItem(time,mwData[i]); 
+                mWCompleteArray.push(dataItem);
+                i++;
+            }
+            if(i == 287){
+                return;
+            }
+          });
+  
+            mWCompleteArray.forEach(function(item){
+                 console.log('{','"time":',item.time,',','"megawatts"',item.megawatts,'},');
+            })
+            createMWEnergyBubbleChart(mWCompleteArray);
+    }
+
+    function generateTimes() {
+        const times = [];
+        const startTime = new Date("2023-03-14T00:00:00"); // Starting time: midnight on March 14, 2023
+        const endTime = new Date("2023-03-15T00:00:00"); // End time: midnight on March 15, 2023
+      
+        let currentTime = startTime;
+        while (currentTime < endTime) {
+          times.push(formatTime(currentTime));
+          currentTime.setMinutes(currentTime.getMinutes() + 5); // Increment by 5 minutes
+        }
+      
+        return times;
+      }
+  
+      
+      // Helper function to format time in HH:mm format
+      function formatTime(date) {
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}`;
+      }
+  
+    function createMWEnergyBubbleChart(data){
+             // Set up the dimensions and margins of the chart
+            const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+            const width = 928 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            // Create the SVG element
+            const svg_ = d3.select("#chart")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            
+            // Create the SVG element and the answer to setting the viewbox smaller SETTING VIEW BOX
+            const svg = d3.select("#chart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+
+          
+            // Load the data
+          //  d3.json("data.json").then(data => {
+            // Convert the time values to Date objects
+            data.forEach(d => {
+                d.time = parseTime(d.time);
+            });
+
+            // Set up the x-axis scale
+            const xScale_ = d3.scaleTime()
+                .domain(d3.extent(data, d => d.time))
+                .range([0, width]);
+
+            // Set up the x-axis scale claude added 
+            const xScale = d3.scaleTime()
+            .domain([
+            d3.timeMinute.offset(d3.min(data, d => d.time), 0),
+            d3.timeMinute.offset(d3.max(data, d => d.time), 0)
+            ])
+            .range([0, width])
+            .nice(d3.timeHour.every(3));
+
+         const xScale__ = d3.scaleTime()
+                .domain([d3.min(data, d => d.time), d3.max(data, d => d.time)])
+                .range([0, width]);
+
+            // Set up the y-axis scale
+            const yScale = d3.scaleLinear()
+                .domain([0,120])
+                .range([height, 0]); 
+    
+            const radiusScale = d3.scaleLinear()
+                .domain([0, 120]) // Megawatt value range
+                .range([1, 6]); // Desired range of radii (adjust as needed)
+            // Add the x-axis
+            svg.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%H:%M")));
+
+            // Add the y-axis
+            svg.append("g")
+              // .attr("transform", `translate(${margin.left}, 2)`)
+                .call(d3.axisLeft(yScale));
+
+
+        // Create circles for each data point
+            svg.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", d => xScale(d.time) + 9)
+            .attr("cy", d => yScale(d.megawatts))
+            .attr("r", d => radiusScale(d.megawatts))
+            .attr("fill", "steelblue")
+            .attr("opacity", 0.7);
+
+            // Add the line
+         /*   svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 1.5)
+                .attr("d", d3.line()
+                .x(d => xScale(d.time))
+                .y(d => yScale(d.megawatts))
+                );*/
+        }
+        
+  </script>
+</body>
+</html>
